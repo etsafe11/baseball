@@ -1,7 +1,19 @@
+setwd("C:/Users/ethompson/Desktop/baseball")
+
+library(dplyr)
+
+
+
+"teamID", "yearID", "lgID", "G", "W", "L", "R", "RA"
+
+Teams_2018 <- read.csv("Teams_2018.csv")
+
+Teams_2018 %>%
+  mutate(year = 2018) %>%
+  select(Tm, year, Lg, G, W, L, R, RA)
 
 
 ##CHAPTER 4 - THE RELATION BETWEEN RUNS AND WINS
-setwd("C:/Users/ethompson/Desktop/baseball")
 Teams <- read.csv("C:/Users/ethompson/Desktop/baseball/core/Teams.csv")
 
 myteams <- subset(Teams, yearID > 2000)[ , 
