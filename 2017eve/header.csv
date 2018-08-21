@@ -1,0 +1,36 @@
+game_id
+visiting_team
+inning
+batting_team
+outs
+balls
+strikes
+vis_score
+home_score
+res_batter
+res_batter hand
+res_pitcher
+res_pitcher hand
+first_runner
+second_runner
+third_runner
+event_text
+leadoff_flag
+pinchhit_flag
+defensive_position
+lineup_position
+event_type
+batter_event_flag
+ab_flag
+hit_value
+SH_flag
+SF_flag
+outs_on_play
+RBI_on_play
+wild_pitch_flag
+passed_ball_flag
+num_errors
+batter_dest
+runner_on_1st_dest
+runner_on_3rd_dest
+runner_on_2nd_dest
