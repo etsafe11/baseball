@@ -156,10 +156,19 @@ simulate_half_inning <- function(P, R, start = 1){
 
 set.seed(555)
 # simulate from 000 0
+runs_simulation <- replicate(500, simulate_half_inning(T.matrix, R, start = 1))
+
+# 6.4% of innings are >= 5 runs
+sum(runs_simulation[runs_simulation >= 5]) / 500
+
+# simulate from 000 0
+# bases empty, no outs - score 0.588 runs on avg
 mean(replicate(500, simulate_half_inning(T.matrix, R, start = 1)))
 # simulate from 100 0
+# runner on 1st, no outs - score 1.406 runs on avg
 mean(replicate(500, simulate_half_inning(T.matrix, R, start = 13)))
 # simulate from 010 1
+# runner on 2nd, 1 out - score 1.35 runs on avg
 mean(replicate(500, simulate_half_inning(T.matrix, R, start = 8)))
 
 
