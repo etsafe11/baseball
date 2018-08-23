@@ -161,15 +161,22 @@ runs_simulation <- replicate(500, simulate_half_inning(T.matrix, R, start = 1))
 # 6.4% of innings are >= 5 runs
 sum(runs_simulation[runs_simulation >= 5]) / 500
 
-# simulate from 000 0
-# bases empty, no outs - score 0.588 runs on avg
-mean(replicate(500, simulate_half_inning(T.matrix, R, start = 1)))
-# simulate from 100 0
-# runner on 1st, no outs - score 1.406 runs on avg
-mean(replicate(500, simulate_half_inning(T.matrix, R, start = 13)))
-# simulate from 010 1
-# runner on 2nd, 1 out - score 1.35 runs on avg
-mean(replicate(500, simulate_half_inning(T.matrix, R, start = 8)))
+# simulate half-innings with different starting states
+runs_j <- function(j){
+  mean(replicate(500, simulate_half_inning(T.matrix, R, j)))
+}
+
+runs_expectancy <- sapply(1:24, runs_j)
+runs_expectancy <- t(round(matrix(runs_expectancy, 3, 8), 2))
+dimnames(runs_expectancy)[[2]] <- c("0 outs", "1 out", "2 outs")
+
+dimnames(runs_expectancy)[[1]] <- c("000", "001", "010", "011", "100", "101", "110", "111")
+
+# runs expectancy matrix after Markov simulation is similar
+# to runs expectancy matrix built from historical data
+runs_expectancy
+
+
 
 
 
