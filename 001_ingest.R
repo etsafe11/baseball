@@ -9,7 +9,7 @@
 #-------------------------- 
 
 
-# ingest data - currenly only ingesting 2017 LA Angels home games
+# ingest data - currently only ingesting 2017 LA Angels home games
 ANA2017 <- as.data.frame(read.csv("2017eve/2017ANA.txt", stringsAsFactors=TRUE, header = FALSE))
 header <- as.data.frame(read.csv("2017eve/header.csv", stringsAsFactors=FALSE, header = FALSE))
 
@@ -70,7 +70,7 @@ n_outs <- with(ANA2017, outs + outs_on_play)
 ANA2017$new_state <- get.state(n_runner1, n_runner2, n_runner3, n_outs)
 
 # filter for plays where the base-out state changed or runs scored on the play
-ANA2017 <- subset(ANA2017, (state != new_state) | runs_scored > 0)
+ANA2017 <- subset(ANA2017, (state != new_state) | (runs_scored > 0))
 
 library(plyr)
 
@@ -81,6 +81,14 @@ data_outs <- ddply(ANA2017, .(half_inning), summarise, outs_inning = sum(outs_on
 ANA2017 <- merge(ANA2017, data_outs)
 
 ANA2017c <- subset(ANA2017, outs_inning == 3)
+
+ANA2017c <- subset(ANA2017c, batter_event_flag = TRUE)
+
+library(car)
+
+ANA2017c$new_state <- recode(ANA2017c$new_state, 
+                             "c('000 3', '100 3', '010 3', '001 3',
+                              '110 3', '101 3', '011 3', '111 3') = '3'")
 
 # expected runs scored in the remainder of the inning (runs expectancy)
 runs <- with(ANA2017c, aggregate(runs_roi, list(state), mean))
@@ -103,5 +111,57 @@ runs_out
 # go back to dply (instead of plyr) to be safe
 
 library(dplyr)
+
+# compute transition probabilities
+T.matrix <- with(ANA2017c, table(state, new_state))
+
+P.matrix <- prop.table(T.matrix, 1)
+
+P.matrix <- rbind(P.matrix, c(rep(0, 24), 1))
+
+# (not required) examples of transition probabilities:
+# the probability of moving from the "000 0" state to the 
+# "000 0" state is .04. In other words, the probability
+# of a HR was 4%.
+P1 <- round(P.matrix["000 0", ], 3)
+data.frame(Prob = P1[P1 > 0])
+# probability of inning ending is 60.9% when you have runner 
+# on second with 2 outs.
+P2 <- round(P.matrix["010 2", ], 3)
+data.frame(Prob = P2[P2 > 0])
+
+# simulating the Markov chain. idea is that
+# runs scored on play equals:
+# (state B runners on base + state B outs + 1) - (state A runners on base + state A outs)
+count_runners_outs <- function(s)
+  sum(as.numeric(strsplit(s, "")[[1]]), na.rm = TRUE)
+
+runners_outs <- sapply(dimnames(T.matrix)[[1]], count_runners_outs)[c(-25, -26, -27, -28, -29, -30)]
+
+R <- outer(runners_outs + 1, runners_outs, FUN = "-")
+dimnames(R)[[1]] <- dimnames(T.matrix)[[1]][-25]
+dimnames(R)[[2]] <- dimnames(T.matrix)[[1]][-25]
+R <- cbind(R, rep(0, 24))
+
+simulate_half_inning <- function(P, R, start = 1){
+  s <- start; path <- NULL; runs <- 0
+  while(s < 25){
+    s.new <- sample(1:25, 1, prob = P[s, ])
+    path <- c(path, s.new)
+    runs <- runs + R[s, s.new]
+    s <- s.new
+  }
+  runs
+}
+
+set.seed(555)
+# simulate from 000 0
+mean(replicate(500, simulate_half_inning(T.matrix, R, start = 1)))
+# simulate from 100 0
+mean(replicate(500, simulate_half_inning(T.matrix, R, start = 13)))
+# simulate from 010 1
+mean(replicate(500, simulate_half_inning(T.matrix, R, start = 8)))
+
+
 
 
