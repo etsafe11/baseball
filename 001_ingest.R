@@ -88,7 +88,7 @@ library(car)
 
 ANA2017c$new_state <- recode(ANA2017c$new_state, 
                              "c('000 3', '100 3', '010 3', '001 3',
-                              '110 3', '101 3', '011 3', '111 3') = '3'")
+                             '110 3', '101 3', '011 3', '111 3') = '3'")
 
 # expected runs scored in the remainder of the inning (runs expectancy)
 runs <- with(ANA2017c, aggregate(runs_roi, list(state), mean))
@@ -156,16 +156,23 @@ simulate_half_inning <- function(P, R, start = 1){
 
 set.seed(555)
 # simulate from 000 0
-runs_simulation <- replicate(500, simulate_half_inning(T.matrix, R, start = 1))
+runs_simulation1 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 1))
+
+# plot
+p1 <- ggplot(as.data.frame(runs_simulation1), aes(x = runs_simulation1)) + 
+  geom_histogram(color="black", fill="white", binwidth = 1) +
+  labs(title="Bases Empty, Zero Outs",x="Runs Scored", y = "Count")
+p1
 
 # 6.4% of innings are >= 5 runs
-sum(runs_simulation[runs_simulation >= 5]) / 500
+sum(runs_simulation1[runs_simulation1 >= 5]) / 5000
 
 # simulate half-innings with different starting states
 runs_j <- function(j){
-  mean(replicate(500, simulate_half_inning(T.matrix, R, j)))
+  mean(replicate(5000, simulate_half_inning(T.matrix, R, j)))
 }
 
+# make runs expectancy matrix based on simulated innings
 runs_expectancy <- sapply(1:24, runs_j)
 runs_expectancy <- t(round(matrix(runs_expectancy, 3, 8), 2))
 dimnames(runs_expectancy)[[2]] <- c("0 outs", "1 out", "2 outs")
@@ -175,6 +182,49 @@ dimnames(runs_expectancy)[[1]] <- c("000", "001", "010", "011", "100", "101", "1
 # runs expectancy matrix after Markov simulation is similar
 # to runs expectancy matrix built from historical data
 runs_expectancy
+
+
+# simulate from 100 0
+runs_simulation2 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 13))
+
+# plot
+p2 <- ggplot(as.data.frame(runs_simulation2), aes(x = runs_simulation2)) + 
+  geom_histogram(color="black", fill="white", binwidth = 1)  +
+  labs(title="Runner on 1st, Zero Outs",x="Runs Scored", y = "Count")
+p2
+
+# simulate from 010 1
+runs_simulation3 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 8))
+
+# plot
+p3 <- ggplot(as.data.frame(runs_simulation3), aes(x = runs_simulation3)) + 
+  geom_histogram(color="black", fill="white", binwidth = 1) +
+  labs(title="Runner on 2nd, One Out",x="Runs Scored", y = "Count")
+p3
+
+# make df for boxplot
+state1 <- rep("000 0", 5000)
+runs_simulation1 <- as.data.frame(runs_simulation1)
+df1 <- cbind(state1, runs_simulation1)
+names(df1) <- c("state", "runs")
+state2 <- rep("100 0", 5000)
+runs_simulation2 <- as.data.frame(runs_simulation2)
+df2 <- cbind(state2, runs_simulation2)
+names(df2) <- c("state", "runs")
+state3 <- rep("010 1", 5000)
+runs_simulation3 <- as.data.frame(runs_simulation3)
+df3 <- cbind(state3, runs_simulation3)
+names(df3) <- c("state", "runs")
+
+df <- rbind(df1, df2, df3)
+
+# boxplot
+p <- ggplot(df, aes(x=state, y=runs)) + 
+  geom_boxplot() +
+  labs(title="Simulated Runs Scored by Base-Out-State", y = "Runs Scored in Inning", x = "State") + 
+  coord_flip() +
+  stat_summary(fun.y=mean, geom="point", shape=8, size=4) 
+p
 
 
 
