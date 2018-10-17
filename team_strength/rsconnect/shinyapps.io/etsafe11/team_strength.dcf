@@ -1,0 +1,12 @@
+name: team_strength
+title: team_strength
+username:
+account: etsafe11
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 518081
+bundleId: 1647006
+url: https://etsafe11.shinyapps.io/team_strength/
+when: 1539754973.98408
+asMultiple: FALSE
+asStatic: FALSE

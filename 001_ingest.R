@@ -184,23 +184,145 @@ dimnames(runs_expectancy)[[1]] <- c("000", "001", "010", "011", "100", "101", "1
 runs_expectancy
 
 
+##### RUNNER ON FIRST, NO OUTS #####
 # simulate from 100 0
 runs_simulation2 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 13))
+runs_simulation2 <- as.data.frame(runs_simulation2)
+names(runs_simulation2) <- "runs"
 
-# plot
-p2 <- ggplot(as.data.frame(runs_simulation2), aes(x = runs_simulation2)) + 
-  geom_histogram(color="black", fill="white", binwidth = 1)  +
-  labs(title="Runner on 1st, Zero Outs",x="Runs Scored", y = "Count")
-p2
-
-# simulate from 010 1
+# bunt success - simulate from 010 1
 runs_simulation3 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 8))
+runs_simulation3 <- as.data.frame(runs_simulation3)
+names(runs_simulation3) <- "runs"
+
+# bunt failure - simulate from 100 1
+runs_simulation4 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 14))
+runs_simulation4 <- as.data.frame(runs_simulation4)
+names(runs_simulation4) <- "runs"
+
+df <- rbind(runs_simulation2, runs_simulation3, runs_simulation4)
+
+df <-
+  df %>%
+    mutate(outcome = c(rep("initial", 5000), rep("success", 5000), rep("failure", 5000)))
+
+p1 <- ggplot(df, aes(x=outcome, y = runs)) + geom_bar()
+p1 + facet_grid(outcome ~ .)
+
+
+g <- ggplot(df, aes(x=outcome, y = runs)) +
+  geom_violin(alpha=1, color="black") + 
+  geom_jitter(alpha=0.025, aes(color=outcome), position = position_jitter(width = 0.3)) +
+  coord_flip() +
+  labs(title="Runner on 1st, No Outs")
+g
+
+
+
+
+
+
+
+
+
+
+
+ggplot() +
+  geom_boxplot(data = df, mapping = aes(x=outcome, y = runs, color = outcome)) 
+
+
++
+  facet_wrap( ~ outcome, scales = "free") +
+  xlab("Words preceded by negation") +
+  ylab("Sentiment score * # of occurrences") +
+  theme_bw() +
+  coord_flip() +
+  
+
+
+
+
+
+a <- as.data.frame(rep("initial", 5000))
+b <- as.data.frame(rep("success", 5000))
+c <- as.data.frame(rep("failure", 5000))
+names(a) <- "outcome"
+names(b) <- "outcome"
+names(c) <- "outcome"
+
+z <- rbind(a, b, c)
+
+df <- cbind(df, z)
+
+
+p1 <- ggplot(df, aes(x=outcomes)) + geom_histogram(binwidth = 1)
+p1 + facet_grid(outcomes ~ .)
+
+
+
+p1 + facet_grid(. ~ outcomes)
+
+
+
+ggplot(df, aes(x=outcomes)) + geom_histogram(binwidth=.5)
+
+
+
+p = ggplot(df, aes(x=outcomes, fill=runs)) +
+  geom_histogram(position="identity", colour="grey40", alpha=0.2, bins = 10) +
+  facet_grid(. ~ outcomes)
+
+
+
+
+p2 <- ggplot(as.data.frame(runs_simulation2), aes(x = runs_simulation2)) + 
+  geom_histogram(color="black", fill="blue", binwidth = 1)  +
+  labs(title="Runner on 1st, Zero Outs", x="Runs Scored", y = "Count")
+p3 <- ggplot(as.data.frame(runs_simulation3), aes(x = runs_simulation3)) + 
+  geom_histogram(color="black", fill="green", binwidth = 1) +
+  labs(title="Success: Runner on 2nd, One Out", x="Runs Scored", y = "Count")
+p4 <- ggplot(as.data.frame(runs_simulation4), aes(x = runs_simulation4)) + 
+  geom_histogram(color="black", fill="red", binwidth = 1) +
+  labs(title="Failure: Runner on 1st, One Out", x="Runs Scored", y = "Count")
+
+
+
+
+
+
+
+sp2 <- ggplot(df, aes(x=total_bill, y=tip/total_bill)) + geom_point(shape=1)
+sp2 + facet_grid(. ~ sex)
+
+
+# theme_set(theme_cowplot(font_size=12)) # reduce default font size
+
+plot_grid(p2, p3, labels = "AUTO", ncol = 1, align = 'v')
+
+
+## RUNNERs ON FIRST AND SECOND, NO OUTS.
+# simulate from 110 0
+runs_simulation4 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 19))
 
 # plot
-p3 <- ggplot(as.data.frame(runs_simulation3), aes(x = runs_simulation3)) + 
-  geom_histogram(color="black", fill="white", binwidth = 1) +
-  labs(title="Runner on 2nd, One Out",x="Runs Scored", y = "Count")
-p3
+p4 <- ggplot(as.data.frame(runs_simulation4), aes(x = runs_simulation4)) + 
+  geom_histogram(color="black", fill="green", binwidth = 1)  +
+  labs(title="Runners on 1st and 2nd, Zero Outs", x="Runs Scored", y = "Count")
+p4
+
+# simulate from 011 1
+runs_simulation5 <- replicate(5000, simulate_half_inning(T.matrix, R, start = 11))
+
+# plot
+p5 <- ggplot(as.data.frame(runs_simulation5), aes(x = runs_simulation5)) + 
+  geom_histogram(color="black", fill="blue", binwidth = 1) +
+  labs(title="Runners on 2nd and 3rd, One Out", x="Runs Scored", y = "Count")
+p5
+
+
+
+
+
 
 # make df for boxplot
 state1 <- rep("000 0", 5000)
@@ -227,6 +349,14 @@ p <- ggplot(df, aes(x=state, y=runs)) +
 p
 
 
+# bunt success
+
+grep("BG", ANA2017$event_text, value = TRUE)
+grep("BGDP", ANA2017$event_text, value = TRUE)
+grep("BL", ANA2017$event_text, value = TRUE)
+grep("BP", ANA2017$event_text, value = TRUE)
+grep("BPDP", ANA2017$event_text, value = TRUE)
+grep("SH", ANA2017$event_text, value = TRUE)
 
 
 

@@ -87,39 +87,38 @@ df_model <-
   filter(year >= 1961) %>%
   select(year, team, runs, opponent, type, home_team)
 
-write_csv(df_model, str_c(today(), "_df_model.csv"))
+saveRDS(df_model, str_c(today(), "-df_model.rds"))
+readRDS("2018-10-16-df_model.rds")
 
 
 ### Model 1 - home/away as nested random effect within team ### 
 
 # Run overnight:
 
-model_nb <- 
-  glmer.nb(runs ~ (1 | team/year) + (1 | opponent/year) + (1 | type/home_team), 
-           df_model)
+#model_nb <- 
+glmer.nb(runs ~ (1 | team/year) + (1 | opponent/year) + (1 | type/home_team), 
+          df_model)
 
 save(model_nb, file = str_c(today(), "_model-nb.rda"))
 
+load("2018-09-04_model-nb.rda")
 
-
-load("2018-09-03_model-nb.rda")
-
-# model 1 results - does not control for home/away effect 
+# model 1 results
 
 model_coef <- coef(model_nb)
 
 # residuals checking
 model_predict <- predict(model_nb, type = "response")
-plot(model_predict, df_model$goals)
-plot(model_predict, model_predict - df_model$goals)
+# plot(model_predict, df_model$runs)                      # broken, need to fix
+# plot(model_predict, model_predict - df_model$runs)      # broken, need to fix
 
-# best intrinsic national goodness over all history
+# best teams overall since 1961
 (model_coef$team - model_coef$opponent) %>% 
   as.data.frame %>% 
   setNames("val") %>% 
   mutate(team = rownames(.)) %>% 
-  arrange(desc(val)) %>% 
-  head(20)
+  arrange(desc(val)) %>%
+  head(10)
 
 # munging coefficients
 
@@ -156,15 +155,34 @@ model_coef_comparable <-
   left_join(model_coef_offense) %>% 
   left_join(model_coef_defense) %>% 
   mutate(overall_score = offense + offense_year - (defense + defense_year)) %>%
-  na.omit()
+  na.omit() %>%
+  select(year, team, offense, offense_year, defense, defense_year, overall_score)
 
-# best 20 team-seasons of all time
+write.csv(model_coef_comparable, 
+          file = "C:/Users/ethompson/Desktop/baseball/team_strength/game_logs/model_coef_comparable.csv")
+
+# rolling into one
+model_app <- 
+  model_coef_comparable %>% 
+  mutate(total_offense = offense + offense_year) %>%
+  mutate(total_defense = -1 * (defense + defense_year)) %>%
+  mutate(overall_score = total_offense + total_defense) %>%
+  mutate(overall_score = round(rescale(overall_score, c(0,100)), 1)) %>%
+  mutate(total_offense = round(rescale(total_offense, c(0,100)), 1)) %>%
+  mutate(total_defense = round(rescale(total_defense, c(0,100)), 1)) %>%
+  na.omit() %>%
+  select(year, team, total_offense, total_defense, overall_score)
+
+write.csv(model_app, 
+          file = "C:/Users/ethompson/Desktop/baseball/team_strength/game_logs/model_app.csv")
+
+# best 10 team-seasons of all time
 model_coef_comparable %>% 
   arrange(desc(overall_score)) %>% 
-  head(20)
+  head(10)
 
 # worst 10 team-seasons of all time
-model_coef_comparable %>% 
+model_app %>% 
   arrange(desc(overall_score)) %>% 
   tail(10)
 
@@ -173,6 +191,9 @@ model_coef_comparable %>%
   filter(year == 2017) %>% 
   arrange(desc(overall_score)) %>% 
   head
+
+
+
 
 # how correlated are offense and defensive skill?
 with(model_coef_comparable, cor(offense + offense_year, defense + defense_year))
